@@ -5,7 +5,7 @@ spring:
   application:
     name: messaging-service
   datasource:
-    url: jdbc:postgresql://localhost:5432/${DB_NAME:plazoleta_messaging}
+    url: jdbc:postgresql://localhost:5432/${DB_NAME:messaging}
     username: ${DB_USERNAME:postgres}
     password: ${DB_PASSWORD:postgres}
   jpa:
