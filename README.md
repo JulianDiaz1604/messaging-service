@@ -1,6 +1,6 @@
 # messaging-service
 
-SMS notifications and security PIN — microservice of the **Plazoleta de comidas** challenge (PRAGMA PowerUp).
+SMS notifications and security PIN — microservice of the **Plazoleta de comidas** challenge (PRAGMA).
 
 ## User stories
 
