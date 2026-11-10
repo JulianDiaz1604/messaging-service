@@ -1,0 +1,11 @@
+services:
+  localstack:
+    # LocalStack Community emulates AWS SNS locally at no cost (no real SMS is sent).
+    image: localstack/localstack:3
+    container_name: messaging-localstack
+    ports:
+      - "4566:4566"
+    environment:
+      - SERVICES=sns
+      - AWS_DEFAULT_REGION=us-east-1
+      - DEBUG=1

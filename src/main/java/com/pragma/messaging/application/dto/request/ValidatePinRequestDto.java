@@ -5,6 +5,7 @@ import lombok.Setter;
 
 @Getter
 @Setter
-public class ObjectRequestDto {
-    private String name;
+public class ValidatePinRequestDto {
+
+    private String pin;
 }
