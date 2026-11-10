@@ -1,28 +1,68 @@
 package com.pragma.messaging.infrastructure.configuration;
 
-import com.pragma.messaging.domain.api.IObjectServicePort;
-import com.pragma.messaging.domain.spi.IObjectPersistencePort;
-import com.pragma.messaging.domain.usecase.ObjectUseCase;
-import com.pragma.messaging.infrastructure.out.jpa.adapter.ObjectJpaAdapter;
-import com.pragma.messaging.infrastructure.out.jpa.mapper.IObjectEntityMapper;
-import com.pragma.messaging.infrastructure.out.jpa.repository.IObjectRepository;
+import com.pragma.messaging.domain.api.INotificationServicePort;
+import com.pragma.messaging.domain.spi.INotificationPersistencePort;
+import com.pragma.messaging.domain.spi.ISmsSenderPort;
+import com.pragma.messaging.domain.usecase.NotificationUseCase;
+import com.pragma.messaging.domain.validation.NotificationValidator;
+import com.pragma.messaging.infrastructure.out.jpa.adapter.NotificationJpaAdapter;
+import com.pragma.messaging.infrastructure.out.jpa.mapper.INotificationEntityMapper;
+import com.pragma.messaging.infrastructure.out.jpa.repository.INotificationRepository;
+import com.pragma.messaging.infrastructure.out.sns.SnsSmsAdapter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
+import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.regions.Region;
+import software.amazon.awssdk.services.sns.SnsClient;
+import software.amazon.awssdk.services.sns.SnsClientBuilder;
+
+import java.net.URI;
 
 @Configuration
 @RequiredArgsConstructor
 public class BeanConfiguration {
-    private final IObjectRepository objectRepository;
-    private final IObjectEntityMapper objectEntityMapper;
+
+    private final INotificationRepository notificationRepository;
+    private final INotificationEntityMapper notificationEntityMapper;
 
     @Bean
-    public IObjectPersistencePort objectPersistencePort() {
-        return new ObjectJpaAdapter(objectRepository, objectEntityMapper);
+    public SnsClient snsClient(
+            @Value("${aws.sns.region:us-east-1}") String region,
+            @Value("${aws.sns.endpoint:}") String endpoint,
+            @Value("${aws.credentials.access-key}") String accessKey,
+            @Value("${aws.credentials.secret-key}") String secretKey) {
+        SnsClientBuilder builder = SnsClient.builder()
+                .region(Region.of(region))
+                // Credentials come from environment variables (aws.credentials.* ←
+                // AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY); nothing is hardcoded. LocalStack accepts any value.
+                .credentialsProvider(StaticCredentialsProvider.create(
+                        AwsBasicCredentials.create(accessKey, secretKey)));
+        if (endpoint != null && !endpoint.isBlank()) {
+            builder.endpointOverride(URI.create(endpoint));
+        }
+        return builder.build();
     }
 
     @Bean
-    public IObjectServicePort objectServicePort() {
-        return new ObjectUseCase(objectPersistencePort());
+    public NotificationValidator notificationValidator() {
+        return new NotificationValidator();
+    }
+
+    @Bean
+    public INotificationPersistencePort notificationPersistencePort() {
+        return new NotificationJpaAdapter(notificationRepository, notificationEntityMapper);
+    }
+
+    @Bean
+    public ISmsSenderPort smsSenderPort(SnsClient snsClient) {
+        return new SnsSmsAdapter(snsClient);
+    }
+
+    @Bean
+    public INotificationServicePort notificationServicePort(ISmsSenderPort smsSenderPort) {
+        return new NotificationUseCase(notificationPersistencePort(), smsSenderPort, notificationValidator());
     }
 }

@@ -46,7 +46,12 @@ dependencies {
 
     implementation "org.springdoc:springdoc-openapi-starter-webmvc-ui:${springdocVersion}"
 
+    // AWS SDK v2 — SNS for SMS delivery (HU14)
+    implementation platform('software.amazon.awssdk:bom:2.28.29')
+    implementation 'software.amazon.awssdk:sns'
+
     testImplementation 'org.springframework.boot:spring-boot-starter-test'
+    testRuntimeOnly 'com.h2database:h2'
 
     // Architecture rules as unit tests (fails the build on a boundary violation).
     testImplementation 'com.tngtech.archunit:archunit-junit5:1.4.1'
