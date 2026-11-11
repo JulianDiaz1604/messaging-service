@@ -11,9 +11,5 @@ spring:
     show-sql: false
 
 aws:
-  credentials:
-    access-key: test
-    secret-key: test
   sns:
     region: us-east-1
-    endpoint: ""
