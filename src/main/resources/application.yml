@@ -16,10 +16,8 @@ spring:
 appDescription: "messaging-service - Plazoleta de comidas (PRAGMA)"
 appVersion: "1.0.0"
 
+# Real AWS SNS. Credentials come from the standard AWS provider chain
+# (AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY env vars, shared config, or IAM role).
 aws:
-  credentials:
-    access-key: ${AWS_ACCESS_KEY_ID:test}
-    secret-key: ${AWS_SECRET_ACCESS_KEY:test}
   sns:
     region: ${AWS_REGION:us-east-1}
-    endpoint: ${AWS_SNS_ENDPOINT:http://localhost:4566}

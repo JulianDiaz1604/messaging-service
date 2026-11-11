@@ -13,13 +13,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import software.amazon.awssdk.auth.credentials.AwsBasicCredentials;
-import software.amazon.awssdk.auth.credentials.StaticCredentialsProvider;
+import software.amazon.awssdk.auth.credentials.DefaultCredentialsProvider;
 import software.amazon.awssdk.regions.Region;
 import software.amazon.awssdk.services.sns.SnsClient;
-import software.amazon.awssdk.services.sns.SnsClientBuilder;
-
-import java.net.URI;
 
 @Configuration
 @RequiredArgsConstructor
@@ -29,21 +25,14 @@ public class BeanConfiguration {
     private final INotificationEntityMapper notificationEntityMapper;
 
     @Bean
-    public SnsClient snsClient(
-            @Value("${aws.sns.region:us-east-1}") String region,
-            @Value("${aws.sns.endpoint:}") String endpoint,
-            @Value("${aws.credentials.access-key}") String accessKey,
-            @Value("${aws.credentials.secret-key}") String secretKey) {
-        SnsClientBuilder builder = SnsClient.builder()
+    public SnsClient snsClient(@Value("${aws.sns.region:us-east-1}") String region) {
+        // Real AWS SNS only. Credentials are resolved from the standard AWS provider chain
+        // (AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY env vars, shared config file, or an IAM role) —
+        // nothing is hardcoded and there is no local endpoint override.
+        return SnsClient.builder()
                 .region(Region.of(region))
-                // Credentials come from environment variables (aws.credentials.* ←
-                // AWS_ACCESS_KEY_ID / AWS_SECRET_ACCESS_KEY); nothing is hardcoded. LocalStack accepts any value.
-                .credentialsProvider(StaticCredentialsProvider.create(
-                        AwsBasicCredentials.create(accessKey, secretKey)));
-        if (endpoint != null && !endpoint.isBlank()) {
-            builder.endpointOverride(URI.create(endpoint));
-        }
-        return builder.build();
+                .credentialsProvider(DefaultCredentialsProvider.create())
+                .build();
     }
 
     @Bean
